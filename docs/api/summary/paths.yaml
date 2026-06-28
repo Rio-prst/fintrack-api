@@ -1,0 +1,31 @@
+paths:
+  /transactions/summary:
+    get:
+      tags: [Transactions]
+      summary: Get transaction summary
+      operationId: getTransactionSummary
+      parameters:
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Summary retrieved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: ../common/schemas.yaml#/components/schemas/ApiResponse
+                  - type: object
+                    properties:
+                      data:
+                        $ref: ../common/schemas.yaml#/components/schemas/SummaryResponse
+        "401":
+          $ref: ../common/responses.yaml#/components/responses/Unauthorized

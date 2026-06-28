@@ -1,0 +1,169 @@
+paths:
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Register new user
+      operationId: register
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ../common/schemas.yaml#/components/schemas/RegisterRequest
+      responses:
+        "201":
+          description: Registration successful
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: ../common/schemas.yaml#/components/schemas/ApiResponse
+                  - type: object
+                    properties:
+                      data:
+                        $ref: ../common/schemas.yaml#/components/schemas/AuthTokens
+        "400":
+          $ref: ../common/responses.yaml#/components/responses/BadRequest
+        "409":
+          description: Email already registered
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas.yaml#/components/schemas/ErrorResponse
+              example:
+                message: "Email sudah terdaftar."
+                requestId: "req_abc123"
+                code: "auth.user.exists"
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Login
+      operationId: login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ../common/schemas.yaml#/components/schemas/LoginRequest
+      responses:
+        "200":
+          description: Login successful
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: ../common/schemas.yaml#/components/schemas/ApiResponse
+                  - type: object
+                    properties:
+                      data:
+                        $ref: ../common/schemas.yaml#/components/schemas/AuthTokens
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas.yaml#/components/schemas/ErrorResponse
+              example:
+                message: "Email atau password salah."
+                requestId: "req_abc123"
+                code: "auth.credentials.invalid"
+
+  /auth/rotate:
+    post:
+      tags: [Auth]
+      summary: Rotate refresh token
+      operationId: rotateToken
+      security: []
+      parameters:
+        - name: Cookie
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Token rotated
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: ../common/schemas.yaml#/components/schemas/ApiResponse
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          accessToken:
+                            type: string
+        "401":
+          description: Invalid refresh token
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas.yaml#/components/schemas/ErrorResponse
+              example:
+                message: "Session expired, silakan login kembali."
+                requestId: "req_abc123"
+                code: "auth.refresh.invalid"
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Logout
+      operationId: logout
+      security: []
+      parameters:
+        - name: Cookie
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Logout successful
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas.yaml#/components/schemas/ApiResponse
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Get current user
+      operationId: getMe
+      responses:
+        "200":
+          description: Current user profile
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: ../common/schemas.yaml#/components/schemas/ApiResponse
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          user:
+                            $ref: ../common/schemas.yaml#/components/schemas/User
+        "401":
+          $ref: ../common/responses.yaml#/components/responses/Unauthorized

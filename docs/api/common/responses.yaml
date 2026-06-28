@@ -1,0 +1,71 @@
+components:
+  responses:
+    BadRequest:
+      description: Validation failed
+      content:
+        application/json:
+          schema:
+            $ref: '../common/schemas.yaml#/components/schemas/ErrorResponse'
+          example:
+            message: "Validasi gagal."
+            requestId: "req_abc123"
+            code: "validation.failed"
+            error:
+              - field: "email"
+                code: "required"
+                message: "Wajib diisi."
+
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '../common/schemas.yaml#/components/schemas/ErrorResponse'
+          example:
+            message: "Autentikasi diperlukan."
+            requestId: "req_abc123"
+            code: "unauthorized"
+
+    Forbidden:
+      description: Access denied
+      content:
+        application/json:
+          schema:
+            $ref: '../common/schemas.yaml#/components/schemas/ErrorResponse'
+          example:
+            message: "Anda tidak memiliki akses."
+            requestId: "req_abc123"
+            code: "forbidden"
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '../common/schemas.yaml#/components/schemas/ErrorResponse'
+          example:
+            message: "Resource tidak ditemukan."
+            requestId: "req_abc123"
+            code: "not_found"
+
+    Conflict:
+      description: Data conflict
+      content:
+        application/json:
+          schema:
+            $ref: '../common/schemas.yaml#/components/schemas/ErrorResponse'
+          example:
+            message: "Email sudah terdaftar."
+            requestId: "req_abc123"
+            code: "auth.user.exists"
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '../common/schemas.yaml#/components/schemas/ErrorResponse'
+          example:
+            message: "Terjadi kesalahan server internal."
+            requestId: "req_abc123"
+            code: "internal_error"

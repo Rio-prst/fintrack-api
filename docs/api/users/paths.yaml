@@ -1,0 +1,66 @@
+paths:
+  /users/{id}:
+    get:
+      tags: [Users]
+      summary: Get user by ID
+      operationId: getUserById
+      security: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: User found
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: ../common/schemas.yaml#/components/schemas/ApiResponse
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          user:
+                            $ref: ../common/schemas.yaml#/components/schemas/User
+        "404":
+          $ref: ../common/responses.yaml#/components/responses/NotFound
+
+    patch:
+      tags: [Users]
+      summary: Update user profile
+      operationId: updateUser
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ../common/schemas.yaml#/components/schemas/UserUpdate
+      responses:
+        "200":
+          description: User updated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: ../common/schemas.yaml#/components/schemas/ApiResponse
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          user:
+                            $ref: ../common/schemas.yaml#/components/schemas/User
+        "403":
+          $ref: ../common/responses.yaml#/components/responses/Forbidden
+        "409":
+          $ref: ../common/responses.yaml#/components/responses/Conflict

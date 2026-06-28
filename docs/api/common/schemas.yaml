@@ -1,0 +1,224 @@
+components:
+  schemas:
+    ApiResponse:
+      type: object
+      required: [message, requestId]
+      properties:
+        message:
+          type: string
+        requestId:
+          type: string
+        data: {}
+        meta:
+          $ref: '#/components/schemas/Pagination'
+
+    ErrorResponse:
+      type: object
+      required: [message, requestId, code]
+      properties:
+        message:
+          type: string
+        requestId:
+          type: string
+        code:
+          type: string
+        error: {}
+
+    ValidationSubError:
+      type: object
+      required: [field, code, message]
+      properties:
+        field:
+          type: string
+        code:
+          type: string
+        message:
+          type: string
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+        limit:
+          type: integer
+        total:
+          type: integer
+        totalPages:
+          type: integer
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    Category:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        type:
+          type: string
+          enum: [income, expense]
+        userId:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    Transaction:
+      type: object
+      properties:
+        id:
+          type: integer
+        amount:
+          type: string
+          description: Decimal as string
+        description:
+          type: string
+        type:
+          type: string
+          enum: [income, expense]
+        date:
+          type: string
+          format: date
+        categoryId:
+          type: integer
+        userId:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    RegisterRequest:
+      type: object
+      required: [email, password, name]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+        name:
+          type: string
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+
+    CategoryCreate:
+      type: object
+      required: [name, type]
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+          enum: [income, expense]
+
+    CategoryUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+          enum: [income, expense]
+
+    TransactionCreate:
+      type: object
+      required: [amount, description, type, categoryId, date]
+      properties:
+        amount:
+          type: string
+          description: Positive decimal string
+        description:
+          type: string
+        type:
+          type: string
+          enum: [income, expense]
+        categoryId:
+          type: integer
+        date:
+          type: string
+          format: date
+
+    TransactionUpdate:
+      type: object
+      properties:
+        amount:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+          enum: [income, expense]
+        categoryId:
+          type: integer
+        date:
+          type: string
+          format: date
+
+    UserUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+        currentPassword:
+          type: string
+
+    SummaryResponse:
+      type: object
+      properties:
+        totalIncome:
+          type: string
+        totalExpense:
+          type: string
+        balance:
+          type: string
+        byCategory:
+          type: array
+          items:
+            type: object
+            properties:
+              categoryId:
+                type: integer
+              categoryName:
+                type: string
+              type:
+                type: string
+                enum: [income, expense]
+              total:
+                type: string
+
+    AuthTokens:
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/User'
+        accessToken:
+          type: string

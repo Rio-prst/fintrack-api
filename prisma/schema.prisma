@@ -1,0 +1,13 @@
+// Finance Tracker — Personal Finance API
+// Intern's job: fill in the schema based on README spec + e2e tests.
+// Tables needed: users, categories, transactions, refresh_tokens
+// See README.md for ERD and field definitions.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}

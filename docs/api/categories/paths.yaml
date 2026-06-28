@@ -1,0 +1,119 @@
+paths:
+  /categories:
+    post:
+      tags: [Categories]
+      summary: Create category
+      operationId: createCategory
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ../common/schemas.yaml#/components/schemas/CategoryCreate
+      responses:
+        "201":
+          description: Category created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: ../common/schemas.yaml#/components/schemas/ApiResponse
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          category:
+                            $ref: ../common/schemas.yaml#/components/schemas/Category
+        "400":
+          $ref: ../common/responses.yaml#/components/responses/BadRequest
+
+    get:
+      tags: [Categories]
+      summary: List user categories
+      operationId: listCategories
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [income, expense]
+      responses:
+        "200":
+          description: Categories listed
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: ../common/schemas.yaml#/components/schemas/ApiResponse
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: ../common/schemas.yaml#/components/schemas/Category
+
+  /categories/{id}:
+    patch:
+      tags: [Categories]
+      summary: Update category
+      operationId: updateCategory
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ../common/schemas.yaml#/components/schemas/CategoryUpdate
+      responses:
+        "200":
+          description: Category updated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: ../common/schemas.yaml#/components/schemas/ApiResponse
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          category:
+                            $ref: ../common/schemas.yaml#/components/schemas/Category
+        "403":
+          $ref: ../common/responses.yaml#/components/responses/Forbidden
+        "404":
+          $ref: ../common/responses.yaml#/components/responses/NotFound
+
+    delete:
+      tags: [Categories]
+      summary: Delete category
+      operationId: deleteCategory
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Category deleted
+        "403":
+          $ref: ../common/responses.yaml#/components/responses/Forbidden
+        "404":
+          $ref: ../common/responses.yaml#/components/responses/NotFound
+        "409":
+          description: Category has transactions
+          content:
+            application/json:
+              schema:
+                $ref: ../common/schemas.yaml#/components/schemas/ErrorResponse
+              example:
+                message: "Kategori masih memiliki transaksi."
+                requestId: "req_abc123"
+                code: "category.in_use"
