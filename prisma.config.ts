@@ -6,4 +6,7 @@ export default defineConfig({
   typedSql: {
     path: './prisma/sql',
   },
+  datasource: {
+    url: process.env.DATABASE_URL ?? '',
+  },
 })
