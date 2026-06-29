@@ -178,4 +178,36 @@ describe('DELETE /categories/:id', () => {
     expect(res.status).toBe(409)
     expect(res.body.code).toBe('category.in_use')
   })
+
+  it('GET without auth → 401', async () => {
+    const res = await request(server()).get('/categories')
+    expect(res.status).toBe(401)
+  })
+
+  it('unicode name (Makanan 🍜) → 201', async () => {
+    const { accessToken } = await seedUser()
+    const res = await authedReq(accessToken)
+      .post('/categories')
+      .send({ name: 'Makanan 🍜', type: 'expense' })
+
+    expect(res.status).toBe(201)
+    expect(res.body.data.category.name).toBe('Makanan 🍜')
+  })
+
+  it('delete → create same name → 201', async () => {
+    const { accessToken } = await seedUser()
+    const name = uniq('cat')
+    const cat = await seedCategory(accessToken, { name })
+    await authedReq(accessToken).delete(`/categories/${cat.id}`)
+
+    const res = await authedReq(accessToken).post('/categories').send({ name, type: 'expense' })
+    expect(res.status).toBe(201)
+  })
+
+  it('PATCH without auth → 401', async () => {
+    const { accessToken } = await seedUser()
+    const cat = await seedCategory(accessToken)
+    const res = await request(server()).patch(`/categories/${cat.id}`).send({ name: 'X' })
+    expect(res.status).toBe(401)
+  })
 })

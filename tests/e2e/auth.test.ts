@@ -130,6 +130,45 @@ describe('POST /auth/register', () => {
     expect(res.status).toBe(400)
     expect(res.body.code).toBe('validation.failed')
   })
+
+  it('register with email containing + (valid)', async () => {
+    const email = `${uniq('a')}+tag@b.com`
+    const res = await request(server())
+      .post('/auth/register')
+      .send({ email, password: 'secret123', name: 'A' })
+
+    expect(res.status).toBe(201)
+    expect(res.body.data.user.email).toBe(email)
+  })
+
+  it('register concurrent same email → one 201, one 409', async () => {
+    const email = `${uniq('race')}@b.com`
+    const [r1, r2] = await Promise.all([
+      request(server()).post('/auth/register').send({ email, password: 'secret123', name: 'A' }),
+      request(server()).post('/auth/register').send({ email, password: 'secret123', name: 'B' }),
+    ])
+
+    const statuses = [r1.status, r2.status].sort()
+    expect(statuses).toEqual([201, 409])
+  })
+
+  it('register returns requestId in response', async () => {
+    const res = await request(server())
+      .post('/auth/register')
+      .send({ email: `${uniq('a')}@b.com`, password: 'secret123', name: 'A' })
+
+    expect(res.body).toHaveProperty('requestId')
+    expect(typeof res.body.requestId).toBe('string')
+  })
+
+  it('register returns message in response', async () => {
+    const res = await request(server())
+      .post('/auth/register')
+      .send({ email: `${uniq('a')}@b.com`, password: 'secret123', name: 'A' })
+
+    expect(res.body).toHaveProperty('message')
+    expect(typeof res.body.message).toBe('string')
+  })
 })
 
 describe('POST /auth/login', () => {
@@ -186,6 +225,29 @@ describe('POST /auth/login', () => {
     const login = await loginUser(email, 'secret123')
 
     expect(login.accessToken).not.toBe(reg.accessToken)
+  })
+
+  it('login with empty body {} → 400', async () => {
+    const res = await request(server()).post('/auth/login').send({})
+    expect(res.status).toBe(400)
+    expect(res.body.code).toBe('validation.failed')
+  })
+
+  it('login returns user without password field', async () => {
+    const email = `${uniq('a')}@b.com`
+    await seedUser({ email, password: 'secret123' })
+    const res = await request(server()).post('/auth/login').send({ email, password: 'secret123' })
+
+    expect(res.status).toBe(200)
+    expect(res.body.data.user).not.toHaveProperty('password')
+  })
+
+  it('login returns requestId in response', async () => {
+    const email = `${uniq('a')}@b.com`
+    await seedUser({ email, password: 'secret123' })
+    const res = await request(server()).post('/auth/login').send({ email, password: 'secret123' })
+
+    expect(res.body).toHaveProperty('requestId')
   })
 })
 
@@ -257,6 +319,43 @@ describe('POST /auth/rotate', () => {
 
     expect(res.status).toBe(401)
   })
+
+  it('rotate returns new accessToken different from previous', async () => {
+    const { refreshToken } = await seedUser()
+    const r1 = await request(server())
+      .post('/auth/rotate')
+      .set('Cookie', `refresh_token=${refreshToken}`)
+    const token1 = r1.body.data.accessToken
+
+    const cookie1 = r1.headers['set-cookie'][0].match(/refresh_token=([^;]+)/)?.[1]
+    const r2 = await request(server())
+      .post('/auth/rotate')
+      .set('Cookie', `refresh_token=${cookie1}`)
+    const token2 = r2.body.data.accessToken
+
+    expect(token1).not.toBe(token2)
+  })
+
+  it('rotate chain: 3 rotations, all old tokens dead', async () => {
+    const { refreshToken: t0 } = await seedUser()
+
+    const r1 = await request(server()).post('/auth/rotate').set('Cookie', `refresh_token=${t0}`)
+    const t1 = r1.headers['set-cookie'][0].match(/refresh_token=([^;]+)/)?.[1]
+
+    const r2 = await request(server()).post('/auth/rotate').set('Cookie', `refresh_token=${t1}`)
+    const t2 = r2.headers['set-cookie'][0].match(/refresh_token=([^;]+)/)?.[1]
+
+    await request(server()).post('/auth/rotate').set('Cookie', `refresh_token=${t2}`)
+
+    // t0 dead
+    expect(
+      (await request(server()).post('/auth/rotate').set('Cookie', `refresh_token=${t0}`)).status,
+    ).toBe(401)
+    // t1 dead
+    expect(
+      (await request(server()).post('/auth/rotate').set('Cookie', `refresh_token=${t1}`)).status,
+    ).toBe(401)
+  })
 })
 
 describe('POST /auth/logout', () => {
@@ -272,6 +371,35 @@ describe('POST /auth/logout', () => {
   it('returns 200 even without cookie (idempotent)', async () => {
     const res = await request(server()).post('/auth/logout')
     expect(res.status).toBe(200)
+  })
+
+  it('logout invalidates refresh token', async () => {
+    const { refreshToken } = await seedUser()
+    await request(server()).post('/auth/logout').set('Cookie', `refresh_token=${refreshToken}`)
+
+    const res = await request(server())
+      .post('/auth/rotate')
+      .set('Cookie', `refresh_token=${refreshToken}`)
+    expect(res.status).toBe(401)
+  })
+
+  it('logout clears cookie with Max-Age=0 or Expires', async () => {
+    const { refreshToken } = await seedUser()
+    const res = await request(server())
+      .post('/auth/logout')
+      .set('Cookie', `refresh_token=${refreshToken}`)
+
+    const cookie = res.headers['set-cookie'][0].toLowerCase()
+    expect(cookie).toMatch(/max-age=0|expires=.*1970|expires=.*epoch/)
+  })
+
+  it('logout returns requestId', async () => {
+    const { refreshToken } = await seedUser()
+    const res = await request(server())
+      .post('/auth/logout')
+      .set('Cookie', `refresh_token=${refreshToken}`)
+
+    expect(res.body).toHaveProperty('requestId')
   })
 })
 
@@ -352,5 +480,23 @@ describe('GET /auth/me', () => {
       .set('Authorization', `Bearer ${login.body.data.accessToken}`)
 
     expect(me.body.data.user).not.toHaveProperty('password')
+  })
+
+  it('me returns requestId in response', async () => {
+    const { accessToken } = await seedUser()
+    const res = await request(server())
+      .get('/auth/me')
+      .set('Authorization', `Bearer ${accessToken}`)
+
+    expect(res.body).toHaveProperty('requestId')
+  })
+
+  it('me returns message in response', async () => {
+    const { accessToken } = await seedUser()
+    const res = await request(server())
+      .get('/auth/me')
+      .set('Authorization', `Bearer ${accessToken}`)
+
+    expect(res.body).toHaveProperty('message')
   })
 })

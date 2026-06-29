@@ -538,4 +538,97 @@ describe('DELETE /transactions/:id', () => {
 
     expect(res.body.data).toHaveLength(1)
   })
+
+  it('POST without auth → 401', async () => {
+    const res = await request(server()).post('/transactions').send({
+      amount: '50000',
+      description: 'X',
+      type: 'expense',
+      categoryId: 1,
+      date: '2025-01-01',
+    })
+    expect(res.status).toBe(401)
+  })
+
+  it('future date → 201', async () => {
+    const { accessToken } = await seedUser()
+    const cat = await seedCategory(accessToken)
+    const res = await authedReq(accessToken)
+      .post('/transactions')
+      .send({
+        amount: '50000',
+        description: uniq('desc'),
+        type: 'expense',
+        categoryId: cat.id,
+        date: '2099-12-31',
+      })
+
+    expect(res.status).toBe(201)
+  })
+
+  it('description 1000 chars → 201', async () => {
+    const { accessToken } = await seedUser()
+    const cat = await seedCategory(accessToken)
+    const longDesc = 'a'.repeat(1000)
+    const res = await authedReq(accessToken).post('/transactions').send({
+      amount: '50000',
+      description: longDesc,
+      type: 'expense',
+      categoryId: cat.id,
+      date: '2025-01-01',
+    })
+
+    expect(res.status).toBe(201)
+    expect(res.body.data.transaction.description).toBe(longDesc)
+  })
+
+  it('amount "0.001" → 400 (>2 decimals)', async () => {
+    const { accessToken } = await seedUser()
+    const cat = await seedCategory(accessToken)
+    const res = await authedReq(accessToken)
+      .post('/transactions')
+      .send({
+        amount: '0.001',
+        description: uniq('desc'),
+        type: 'expense',
+        categoryId: cat.id,
+        date: '2025-01-01',
+      })
+
+    expect(res.status).toBe(400)
+  })
+
+  it('GET without auth → 401', async () => {
+    const res = await request(server()).get('/transactions')
+    expect(res.status).toBe(401)
+  })
+
+  it('page beyond total → empty data', async () => {
+    const { accessToken } = await seedUser()
+    const cat = await seedCategory(accessToken)
+    await seedTransaction(accessToken, { categoryId: cat.id })
+    const res = await authedReq(accessToken).get('/transactions?page=999')
+
+    expect(res.status).toBe(200)
+    expect(res.body.data).toHaveLength(0)
+  })
+
+  it('limit=1 → single item', async () => {
+    const { accessToken } = await seedUser()
+    const cat = await seedCategory(accessToken)
+    await seedTransaction(accessToken, { categoryId: cat.id })
+    await seedTransaction(accessToken, { categoryId: cat.id })
+    const res = await authedReq(accessToken).get('/transactions?limit=1')
+
+    expect(res.status).toBe(200)
+    expect(res.body.data).toHaveLength(1)
+  })
+
+  it('PATCH without auth → 401', async () => {
+    const { accessToken } = await seedUser()
+    const cat = await seedCategory(accessToken)
+    const txn = await seedTransaction(accessToken, { categoryId: cat.id })
+    const res = await request(server()).patch(`/transactions/${txn.id}`).send({ amount: '1' })
+    expect(res.status).toBe(401)
+  })
 })

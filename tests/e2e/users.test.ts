@@ -113,4 +113,43 @@ describe('PATCH /users/:id', () => {
     expect(res.status).toBe(200)
     expect(res.body.data.user.name).toBe('')
   })
+
+  it('PATCH without auth → 401', async () => {
+    const { user } = await seedUser()
+    const res = await request(server()).patch(`/users/${user.id}`).send({ name: 'X' })
+    expect(res.status).toBe(401)
+  })
+
+  it('update name to 500 chars → 200', async () => {
+    const { user, accessToken } = await seedUser({ name: 'Alice' })
+    const longName = 'a'.repeat(500)
+    const res = await authedReq(accessToken).patch(`/users/${user.id}`).send({ name: longName })
+
+    expect(res.status).toBe(200)
+    expect(res.body.data.user.name).toBe(longName)
+  })
+
+  it('update email to same email (no change) → 200', async () => {
+    const { user, accessToken } = await seedUser()
+    const res = await authedReq(accessToken).patch(`/users/${user.id}`).send({ email: user.email })
+
+    expect(res.status).toBe(200)
+    expect(res.body.data.user.email).toBe(user.email)
+  })
+
+  it('get user profile after password change → still valid', async () => {
+    const { user, accessToken } = await seedUser({ password: 'oldpass123' })
+    await authedReq(accessToken)
+      .patch(`/users/${user.id}`)
+      .send({ password: 'newpass123', currentPassword: 'oldpass123' })
+
+    const res = await request(server()).get(`/users/${user.id}`)
+    expect(res.status).toBe(200)
+    expect(res.body.data.user.email).toBe(user.email)
+  })
+
+  it('non-numeric id returns 400 (not 404)', async () => {
+    const res = await request(server()).get('/users/abc')
+    expect(res.status).toBe(400)
+  })
 })
