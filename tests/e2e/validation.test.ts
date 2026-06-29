@@ -14,7 +14,10 @@ describe('Request validation', () => {
     })
 
     it('POST with null body → 400', async () => {
-      const res = await request(server()).post('/auth/register').send(null)
+      const res = await request(server())
+        .post('/auth/register')
+        .set('Content-Type', 'application/json')
+        .send('null')
 
       expect(res.status).toBe(400)
     })
