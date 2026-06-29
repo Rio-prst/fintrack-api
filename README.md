@@ -160,7 +160,7 @@ flowchart LR
 5. Run `npm run db:generate` to generate typed Prisma client + TypedSQL.
 6. Implement using **TypedSQL first, Typed Client as fallback**:
    - DTO (Zod schema)
-   - Service (TypedSQL queries in `prisma/sql/*.sql`, Typed Client untuk dynamic filter)
+   - Service (TypedSQL queries in `prisma/sql/*.sql`, Typed Client for dynamic filters)
    - Controller (HTTP layer)
    - Module (wire everything)
 7. Mount in `app.module.ts`.
@@ -169,10 +169,10 @@ flowchart LR
 
 ### Prisma typed queries
 
-**Default: TypedSQL** — tulis SQL di `prisma/sql/*.sql`, dapat type-safe otomatis.
-**Fallback: Typed Client** — hanya untuk dynamic query (filter不确定, column dinamis).
+**Default: TypedSQL** — write SQL in `prisma/sql/*.sql`, get type-safe queries automatically.
+**Fallback: Typed Client** — only for dynamic queries (runtime-determined filters/columns).
 
-#### 1. TypedSQL (优先)
+#### 1. TypedSQL (preferred)
 
 Write SQL in `prisma/sql/*.sql` files with type-safe parameters:
 
@@ -201,12 +201,12 @@ const txns = await prisma.$queryRawTyped(
 )
 ```
 
-#### 2. Typed Client (fallback untuk dynamic queries)
+#### 2. Typed Client (fallback for dynamic queries)
 
-Hanya gunakan ketika query benar-benar dinamis (column/where ditentukan runtime):
+Only use when the query is truly dynamic (columns/where determined at runtime):
 
 ```typescript
-// Dynamic filter — column tidak bisa ditentukan di SQL statis
+// Dynamic filter — columns cannot be determined in static SQL
 const where: Prisma.TransactionWhereInput = {}
 if (type) where.type = type
 if (categoryId) where.categoryId = categoryId
@@ -225,90 +225,34 @@ Generated client output: `src/generated/prisma/` (auto-generated, do not edit).
 
 All requests/responses are JSON. Auth uses `Authorization: Bearer <token>` (JWT) or `refresh_token` cookie.
 
+**Full OpenAPI spec:** [`docs/api/openapi.yaml`](docs/api/openapi.yaml)
+
+| Endpoint file | Endpoints |
+|---------------|-----------|
+| [`docs/api/auth/paths.yaml`](docs/api/auth/paths.yaml) | register, login, rotate, logout, me |
+| [`docs/api/users/paths.yaml`](docs/api/users/paths.yaml) | get user, update user |
+| [`docs/api/categories/paths.yaml`](docs/api/categories/paths.yaml) | CRUD categories |
+| [`docs/api/transactions/paths.yaml`](docs/api/transactions/paths.yaml) | CRUD transactions, filters, pagination |
+| [`docs/api/summary/paths.yaml`](docs/api/summary/paths.yaml) | transaction summary |
+
+**Shared schemas:** [`docs/api/common/schemas.yaml`](docs/api/common/schemas.yaml)
+**Error responses:** [`docs/api/common/responses.yaml`](docs/api/common/responses.yaml)
+
 ### Response envelope
 
-**Success:**
 ```json
+// Success
 { "message": "Login successful.", "requestId": "req_abc123", "data": { ... } }
-```
 
-**Success with pagination:**
-```json
+// Success with pagination
 { "message": "Transactions retrieved.", "requestId": "req_abc123", "data": [...], "meta": { "page": 1, "limit": 20, "total": 45, "totalPages": 3 } }
-```
 
-**Error:**
-```json
+// Error
 { "message": "Invalid email or password.", "requestId": "req_abc123", "code": "auth.credentials.invalid" }
+
+// Validation error
+{ "message": "Validation failed.", "requestId": "req_abc123", "code": "validation.failed", "error": [{ "field": "email", "code": "required", "message": "Required." }] }
 ```
-
-**Validation error:**
-```json
-{ "message": "Validasi gagal.", "requestId": "req_abc123", "code": "validation.failed", "error": [{ "field": "email", "code": "required", "message": "Wajib diisi." }] }
-```
-
-### Error codes
-
-| Code | HTTP | When |
-|------|------|------|
-| `validation.failed` | 400 | Input validation fails |
-| `unauthorized` | 401 | No token / invalid token |
-| `auth.credentials.invalid` | 401 | Wrong email/password |
-| `auth.refresh.invalid` | 401 | Refresh token revoked/expired |
-| `auth.password.wrong_current` | 401 | Wrong current password |
-| `forbidden` | 403 | Not owner |
-| `not_found` | 404 | Resource not found |
-| `auth.user.exists` | 409 | Email already registered |
-| `category.in_use` | 409 | Category has transactions |
-| `internal_error` | 500 | Fallback |
-
-### Endpoints
-
-| Method | Path | Auth | Body | Success |
-|--------|------|------|------|---------|
-| POST | `/auth/register` | – | `{ email, password, name }` | 201 `{ user, accessToken }` + Set-Cookie |
-| POST | `/auth/login` | – | `{ email, password }` | 200 `{ user, accessToken }` + Set-Cookie |
-| POST | `/auth/rotate` | cookie | – | 200 `{ accessToken }` + Set-Cookie |
-| POST | `/auth/logout` | cookie | – | 200 + Clear-Cookie |
-| GET | `/auth/me` | Bearer | – | 200 `{ user }` |
-| GET | `/users/:id` | – | – | 200 `{ user }` |
-| PATCH | `/users/:id` | Bearer (self) | `{ name?, email?, password?, currentPassword? }` | 200 `{ user }` |
-| POST | `/categories` | Bearer | `{ name, type }` | 201 `{ category }` |
-| GET | `/categories` | Bearer | query: `type?` | 200 `[{ category }]` |
-| PATCH | `/categories/:id` | Bearer (owner) | `{ name?, type? }` | 200 `{ category }` |
-| DELETE | `/categories/:id` | Bearer (owner) | – | 204 |
-| POST | `/transactions` | Bearer | `{ amount, description, type, categoryId, date }` | 201 `{ transaction }` |
-| GET | `/transactions` | Bearer | query: `type?, categoryId?, from?, to?, page?, limit?` | 200 `[...transactions]` + meta |
-| GET | `/transactions/summary` | Bearer | query: `from?, to?` | 200 `{ totalIncome, totalExpense, balance, byCategory }` |
-| GET | `/transactions/:id` | Bearer (owner) | – | 200 `{ transaction }` |
-| PATCH | `/transactions/:id` | Bearer (owner) | partial | 200 `{ transaction }` |
-| DELETE | `/transactions/:id` | Bearer (owner) | – | 204 |
-
-### Enums
-
-- `type`: `income | expense`
-
-### Filters
-
-| Param | Endpoint | Meaning |
-|-------|----------|---------|
-| `type` | GET /categories, GET /transactions | exact match |
-| `categoryId` | GET /transactions | filter by category |
-| `from` | GET /transactions, GET /transactions/summary | date >= from |
-| `to` | GET /transactions, GET /transactions/summary | date <= to |
-| `page` | GET /transactions | 1-based, default 1 |
-| `limit` | GET /transactions | default 20, max 100, min 1 |
-
-### Validation rules
-
-- `email`: valid email format
-- `password`: minimum 8 characters
-- `amount`: numeric string, > 0, max 2 decimal places
-- `type`: enum `income | expense`
-- `date`: valid date string (YYYY-MM-DD)
-- `categoryId`: must exist and belong to user
-- `name` (category): non-empty
-- Password change: must include `currentPassword`
 
 ### Auth flow
 
