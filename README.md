@@ -1,6 +1,6 @@
 # Finance Tracker API
 
-REST API for personal finance tracking. Built test-first — **128 e2e tests are RED by design**. Your job: make them green.
+REST API for personal finance tracking. Built test-first — **199 e2e tests are RED by design**. Your job: make them green.
 
 ## Stack
 
@@ -70,12 +70,14 @@ cp .env.example .env.test
 └── tests/
     └── e2e/
         ├── helpers.ts          # API-based seeders
-        ├── auth.test.ts        # 28 tests
-        ├── users.test.ts       # 12 tests
-        ├── categories.test.ts  # 16 tests
-        ├── transactions.test.ts# 32 tests
-        ├── summary.test.ts     # 10 tests
-        └── integration.test.ts # 5 flows
+        ├── auth.test.ts        # 51 tests
+        ├── users.test.ts       # 18 tests
+        ├── categories.test.ts  # 23 tests
+        ├── transactions.test.ts# 52 tests
+        ├── summary.test.ts     # 14 tests
+        ├── sessions.test.ts    # 16 tests
+        ├── validation.test.ts  # 15 tests
+        └── integration.test.ts # 10 flows
 ```
 
 ## Entity-relationship diagram
@@ -153,7 +155,7 @@ flowchart LR
 
 ## TDD workflow
 
-1. Run `npm test` — all 128 tests fail (routes don't exist yet).
+1. Run `npm test` — all 199 tests fail (routes don't exist yet).
 2. Pick the simplest test, e.g. `auth.test.ts` → "POST /auth/register returns 201".
 3. Write the Prisma schema in `prisma/schema.prisma`.
 4. Run `npm run db:migrate` to apply.

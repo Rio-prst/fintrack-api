@@ -1,7 +1,6 @@
-import request from 'supertest'
 import { describe, expect, it } from 'vitest'
 import { server } from './db'
-import { authedReq, seedCategory, seedTransaction, seedUser, uniq } from './helpers'
+import { authedReq, request, seedCategory, seedTransaction, seedUser, uniq } from './helpers'
 
 describe('GET /transactions/summary', () => {
   it('returns 401 without auth', async () => {

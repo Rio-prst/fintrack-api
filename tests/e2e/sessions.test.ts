@@ -192,10 +192,10 @@ describe('Session management', () => {
 
     it('password change revokes old refresh tokens', async () => {
       const email = `${uniq('a')}@b.com`
-      const { user, refreshToken } = await seedUser({ email, password: 'oldpass123' })
+      const { user, accessToken, refreshToken } = await seedUser({ email, password: 'oldpass123' })
 
       // Change password
-      await authedReq(refreshToken)
+      await authedReq(accessToken)
         .patch(`/users/${user.id}`)
         .send({ password: 'newpass123', currentPassword: 'oldpass123' })
 
