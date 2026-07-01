@@ -1,11 +1,11 @@
-import { Body, Controller, Get, HttpCode, Post, Req, Res, UseGuards } from '@nestjs/common'
+import { Body, Controller, Get, HttpCode, Inject, Post, Req, Res, UseGuards } from '@nestjs/common'
 import type { Request, Response } from 'express'
 import type { RequestUser } from '../../common/decorators/current-user.decorator'
 import { CurrentUser } from '../../common/decorators/current-user.decorator'
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard'
 import { ApiResponse } from '../../common/interceptors/api.response'
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe'
-import type { AuthService } from './auth.service'
+import { AuthService } from './auth.service'
 import type { LoginDto } from './dto/login.dto'
 import { LoginSchema } from './dto/login.dto'
 import type { RegisterDto } from './dto/register.dto'
@@ -13,7 +13,7 @@ import { RegisterSchema } from './dto/register.dto'
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(@Inject(AuthService) private readonly authService: AuthService) {}
 
   @Post('register')
   async register(

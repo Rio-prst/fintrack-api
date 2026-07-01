@@ -1,6 +1,7 @@
 import {
   ConflictException,
   ForbiddenException,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
@@ -13,13 +14,13 @@ import {
   getCategoryByNameAndUser,
   updateCategory,
 } from '../../generated/prisma/sql'
-import type { PrismaService } from '../../prisma/prisma.service'
+import { PrismaService } from '../../prisma/prisma.service'
 import type { CreateCategoryDto } from './dto/create-category.dto'
 import type { UpdateCategoryDto } from './dto/update-category.dto'
 
 @Injectable()
 export class CategoriesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   private toNumber(value: bigint): number {
     return Number(value)

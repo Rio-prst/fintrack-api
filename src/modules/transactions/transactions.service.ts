@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common'
+import { ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common'
 import {
   countTransactions,
   createTransaction,
@@ -8,14 +8,14 @@ import {
   getTransactions,
   updateTransaction,
 } from '../../generated/prisma/sql'
-import type { PrismaService } from '../../prisma/prisma.service'
+import { PrismaService } from '../../prisma/prisma.service'
 import type { CreateTransactionDto } from './dto/create-transaction.dto'
 import type { QueryTransactionDto } from './dto/query-transaction.dto'
 import type { UpdateTransactionDto } from './dto/update-transaction.dto'
 
 @Injectable()
 export class TransactionsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   private toNumber(value: bigint): number {
     return Number(value)

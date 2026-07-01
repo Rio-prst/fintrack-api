@@ -1,6 +1,7 @@
 import {
   ConflictException,
   ForbiddenException,
+  Inject,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -14,12 +15,12 @@ import {
   updateUserPassword,
   updateUserProfile,
 } from '../../generated/prisma/sql'
-import type { PrismaService } from '../../prisma/prisma.service'
+import { PrismaService } from '../../prisma/prisma.service'
 import type { UpdateUserDto } from './dto/update-user.dto'
 
 @Injectable()
 export class UserService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   private toNumber(value: bigint): number {
     return Number(value)

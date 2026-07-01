@@ -1,11 +1,11 @@
-import { Injectable } from '@nestjs/common'
+import { Inject, Injectable } from '@nestjs/common'
 import { getSummaryByCategory, getSummaryTotals } from '../../generated/prisma/sql'
-import type { PrismaService } from '../../prisma/prisma.service'
+import { PrismaService } from '../../prisma/prisma.service'
 import type { QuerySummaryDto } from './dto/query-summary.dto'
 
 @Injectable()
 export class SummaryService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   private toNumber(value: bigint): number {
     return Number(value)

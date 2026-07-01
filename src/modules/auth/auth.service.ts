@@ -2,6 +2,7 @@ import crypto from 'node:crypto'
 import {
   BadRequestException,
   ConflictException,
+  Inject,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common'
@@ -17,7 +18,7 @@ import {
   getUserById,
   revokeRefreshToken,
 } from '../../generated/prisma/sql'
-import type { PrismaService } from '../../prisma/prisma.service'
+import { PrismaService } from '../../prisma/prisma.service'
 import type { LoginDto } from './dto/login.dto'
 import type { RegisterDto } from './dto/register.dto'
 
@@ -66,7 +67,7 @@ function toUser(row: { id: bigint; email: string; name: string; created_at: Date
 
 @Injectable()
 export class AuthService {
-  constructor(private prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private prisma: PrismaService) {}
 
   async register(dto: RegisterDto) {
     if (!dto?.email) {

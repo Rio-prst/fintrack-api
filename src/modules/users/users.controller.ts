@@ -3,6 +3,7 @@ import {
   Body,
   Controller,
   Get,
+  Inject,
   Param,
   ParseIntPipe,
   Patch,
@@ -15,11 +16,11 @@ import { ApiResponse } from '../../common/interceptors/api.response'
 import { ZodValidationPipe } from '../../common/pipes/zod-validation.pipe'
 import type { UpdateUserDto } from './dto/update-user.dto'
 import { UpdateUserSchema } from './dto/update-user.dto'
-import type { UserService } from './users.service'
+import { UserService } from './users.service'
 
 @Controller('users')
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(@Inject(UserService) private readonly userService: UserService) {}
 
   @Get(':id')
   async getProfile(@Param('id', ParseIntPipe) id: number) {

@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   HttpCode,
+  Inject,
   Param,
   ParseIntPipe,
   Patch,
@@ -22,11 +23,11 @@ import type { QueryTransactionDto } from './dto/query-transaction.dto'
 import { QueryTransactionSchema } from './dto/query-transaction.dto'
 import type { UpdateTransactionDto } from './dto/update-transaction.dto'
 import { UpdateTransactionSchema } from './dto/update-transaction.dto'
-import type { TransactionsService } from './transactions.service'
+import { TransactionsService } from './transactions.service'
 
 @Controller('transactions')
 export class TransactionsController {
-  constructor(private readonly transactionsService: TransactionsService) {}
+  constructor(@Inject(TransactionsService) private readonly transactionsService: TransactionsService) {}
 
   @Post()
   @UseGuards(JwtAuthGuard)
