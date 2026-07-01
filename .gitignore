@@ -12,7 +12,6 @@ tsconfig.tsbuildinfo
 
 # Prisma
 prisma/dev.db
-prisma/migrations/
 src/generated/
 
 # IDE
