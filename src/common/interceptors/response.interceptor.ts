@@ -1,3 +1,4 @@
+import crypto from 'node:crypto'
 import {
   type CallHandler,
   type ExecutionContext,
@@ -9,17 +10,19 @@ import type { ControllerResponse } from '../types/controller-response.interface'
 import { ApiResponse } from './api.response'
 
 @Injectable()
-export class ResponseInterceptor implements NestInterceptor<unknown, ControllerResponse> {
+export class ResponseInterceptor
+  implements NestInterceptor<unknown, ControllerResponse | undefined>
+{
   intercept(
     _context: ExecutionContext,
     next: CallHandler<unknown>,
-  ): Observable<ControllerResponse> {
-    const requestId = `req_${Math.random().toString(36).substring(2, 11)}`
+  ): Observable<ControllerResponse | undefined> {
+    const requestId = `req_${crypto.randomUUID()}`
 
     return next.handle().pipe(
       map((result: unknown) => {
         const httpResponse = _context.switchToHttp().getResponse<{ statusCode: number }>()
-        if (httpResponse.statusCode === 204) return { message: '', requestId, data: undefined }
+        if (httpResponse.statusCode === 204) return undefined
 
         if (result instanceof ApiResponse) {
           const envelope: ControllerResponse = {

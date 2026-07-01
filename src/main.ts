@@ -7,7 +7,7 @@ async function bootstrap() {
   if (!process.env.JWT_REFRESH_SECRET) throw new Error('JWT_REFRESH_SECRET is required')
 
   const app = await NestFactory.create(AppModule)
-  app.enableCors()
+  app.enableCors({ origin: process.env.CORS_ORIGIN })
   app.use(cookieParser())
   await app.listen(process.env.PORT ?? 3000)
 }

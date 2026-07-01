@@ -92,6 +92,13 @@ export class UserService {
       updateUserProfile(authUserId, finalName, finalEmail),
     )
 
+    if (!updatedUsers[0]) {
+      throw new NotFoundException({
+        code: 'user.not_found',
+        message: 'User not found',
+      })
+    }
+
     return this.toUserResponse(updatedUsers[0])
   }
 }

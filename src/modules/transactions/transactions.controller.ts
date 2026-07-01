@@ -23,12 +23,16 @@ import type { QueryTransactionDto } from './dto/query-transaction.dto'
 import { QueryTransactionSchema } from './dto/query-transaction.dto'
 import type { UpdateTransactionDto } from './dto/update-transaction.dto'
 import { UpdateTransactionSchema } from './dto/update-transaction.dto'
+import type { QuerySummaryDto } from './summary/dto/query-summary.dto'
+import { QuerySummarySchema } from './summary/dto/query-summary.dto'
+import { SummaryService } from './summary/summary.service'
 import { TransactionsService } from './transactions.service'
 
 @Controller('transactions')
 export class TransactionsController {
   constructor(
     @Inject(TransactionsService) private readonly transactionsService: TransactionsService,
+    @Inject(SummaryService) private readonly summaryService: SummaryService,
   ) {}
 
   @Post()
@@ -39,6 +43,16 @@ export class TransactionsController {
   ) {
     const transaction = await this.transactionsService.create(user.id, dto)
     return new ApiResponse('Transaction created.', { transaction })
+  }
+
+  @Get('summary')
+  @UseGuards(JwtAuthGuard)
+  async getSummary(
+    @Query(new ZodValidationPipe(QuerySummarySchema)) query: QuerySummaryDto,
+    @CurrentUser() user: RequestUser,
+  ) {
+    const result = await this.summaryService.getSummary(user.id, query)
+    return new ApiResponse('Summary retrieved.', result)
   }
 
   @Get()

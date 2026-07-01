@@ -5,6 +5,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common'
+import { isDuplicateError } from '../../common/utils/prisma-error'
 import {
   checkCategoryTransaction,
   createCategory,
@@ -43,16 +44,18 @@ export class CategoriesService {
   }
 
   async create(userId: number, dto: CreateCategoryDto) {
-    const existing = await this.prisma.$queryRawTyped(getCategoryByNameAndUser(userId, dto.name))
-    if (existing[0]) {
-      throw new ConflictException({
-        code: 'category.duplicate_name',
-        message: `Category with name '${dto.name}' already exists`,
-      })
+    try {
+      const created = await this.prisma.$queryRawTyped(createCategory(userId, dto.name, dto.type))
+      return this.toCategoryResponse(created[0])
+    } catch (error) {
+      if (isDuplicateError(error)) {
+        throw new ConflictException({
+          code: 'category.duplicate_name',
+          message: `Category with name '${dto.name}' already exists`,
+        })
+      }
+      throw error
     }
-
-    const created = await this.prisma.$queryRawTyped(createCategory(userId, dto.name, dto.type))
-    return this.toCategoryResponse(created[0])
   }
 
   async findAll(userId: number, type?: string) {
@@ -79,7 +82,7 @@ export class CategoriesService {
     const finalName = dto.name !== undefined ? dto.name : currentCategory.name
     const finalType = dto.type !== undefined ? dto.type : currentCategory.type
 
-    if (dto.name && dto.name.toLowerCase() !== currentCategory.name.toLowerCase()) {
+    if (dto.name && dto.name !== currentCategory.name) {
       const duplicate = await this.prisma.$queryRawTyped(getCategoryByNameAndUser(userId, dto.name))
       if (duplicate[0]) {
         throw new ConflictException({
@@ -90,6 +93,14 @@ export class CategoriesService {
     }
 
     const updated = await this.prisma.$queryRawTyped(updateCategory(id, finalName, finalType))
+
+    if (!updated[0]) {
+      throw new NotFoundException({
+        code: 'category.not_found',
+        message: 'Category not found',
+      })
+    }
+
     return this.toCategoryResponse(updated[0])
   }
 

@@ -1,11 +1,5 @@
 import crypto from 'node:crypto'
-import {
-  BadRequestException,
-  ConflictException,
-  Inject,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common'
+import { ConflictException, Inject, Injectable, UnauthorizedException } from '@nestjs/common'
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import type { JwtPayload } from '../../common/types/jwt-payload.interface'
@@ -70,10 +64,6 @@ export class AuthService {
   constructor(@Inject(PrismaService) private prisma: PrismaService) {}
 
   async register(dto: RegisterDto) {
-    if (!dto?.email) {
-      throw new BadRequestException({ code: 'validation.failed', message: 'Validation failed' })
-    }
-
     const existing = await this.prisma.$queryRawTyped(getUserByEmail(dto.email))
     if (existing[0]) {
       throw new ConflictException({ code: 'auth.user.exists', message: 'Email already registered' })
@@ -101,10 +91,6 @@ export class AuthService {
   }
 
   async login(dto: LoginDto) {
-    if (!dto?.email) {
-      throw new BadRequestException({ code: 'validation.failed', message: 'Validation failed' })
-    }
-
     const users = await this.prisma.$queryRawTyped(getUserByEmail(dto.email))
     const row = users[0]
     if (!row) {
@@ -147,7 +133,7 @@ export class AuthService {
     }
 
     const stored = await this.prisma.$queryRawTyped(getRefreshToken(token))
-    if (!stored[0] || stored[0].revoked) {
+    if (!stored[0]) {
       throw new UnauthorizedException({
         code: 'auth.token.invalid',
         message: 'Refresh token revoked or not found',

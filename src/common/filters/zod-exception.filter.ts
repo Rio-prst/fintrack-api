@@ -1,3 +1,4 @@
+import crypto from 'node:crypto'
 import {
   type ArgumentsHost,
   Catch,
@@ -34,7 +35,7 @@ export class ZodExceptionFilter implements ExceptionFilter {
       status: (statusCode: number) => { json: (body: unknown) => void }
     }>()
 
-    const requestId = `req_${Math.random().toString(36).substring(2, 11)}`
+    const requestId = `req_${crypto.randomUUID()}`
 
     if (exception instanceof ZodError) {
       const formattedErrors: ValidationError[] = exception.issues.map((err) => {

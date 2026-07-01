@@ -7,4 +7,4 @@ SELECT
   user_id,
   created_at
 FROM categories
-WHERE user_id = $1 AND LOWER(name) = LOWER($2);
+WHERE user_id = $1 AND name = $2;

@@ -163,6 +163,13 @@ export class TransactionsService {
       updateTransaction(id, finalCategoryId, finalAmount, finalType, finalDate, finalDescription),
     )
 
+    if (!updated[0]) {
+      throw new NotFoundException({
+        code: 'transaction.not_found',
+        message: 'Transaction not found',
+      })
+    }
+
     return this.toTransactionResponse(updated[0])
   }
 

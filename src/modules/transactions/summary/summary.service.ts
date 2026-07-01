@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common'
-import { getSummaryByCategory, getSummaryTotals } from '../../generated/prisma/sql'
-import { PrismaService } from '../../prisma/prisma.service'
+import { getSummaryByCategory, getSummaryTotals } from '../../../generated/prisma/sql'
+import { PrismaService } from '../../../prisma/prisma.service'
 import type { QuerySummaryDto } from './dto/query-summary.dto'
 
 @Injectable()
@@ -23,7 +23,7 @@ export class SummaryService {
 
     const totalIncome = this.stripAmount(totalsRow?.total_income)
     const totalExpense = this.stripAmount(totalsRow?.total_expense)
-    const balance = String(Number(totalIncome) - Number(totalExpense))
+    const balance = this.stripAmount(totalsRow?.balance)
 
     const byCategoryRows = await this.prisma.$queryRawTyped(getSummaryByCategory(userId, from, to))
 
